@@ -7,38 +7,25 @@ public class ClientHandler implements Runnable{
     private Socket s;
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
 
-    private BufferedReader br;
-    private BufferedWriter bw;
+    public PrintStream out;
+    public BufferedReader in;
 
     private String clientUserName;
     
     public ClientHandler(Socket s) {
         try {
             this.s = s;
-            this.bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-            this.br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+            this.out = new PrintStream(s.getOutputStream());
+            this.in = new BufferedReader(new InputStreamReader(s.getInputStream()));
             
-            this.clientUserName = this.br.readLine().trim();
+            this.clientUserName = this.in.readLine().trim();
             clientHandlers.add(this);
-            broadcastMessage("SERVER: "+this.clientUserName+" has entered the chat.");
         } catch (Exception e) {
-            closeEverything(s, br, bw);
+            closeEverything(s, out, in);
         }
     }
 
-    private void closeEverything(Socket s2, BufferedReader br2, BufferedWriter bw2) {
-    }
-    public void broadcastMessage(String message) {
-        for (ClientHandler c : clientHandlers) {
-            try {
-                if (!c.clientUserName.equals(this.clientUserName)) {
-                    c.bw.write(message);
-                    c.bw.newLine();
-                    c.bw.flush();
-                }
-            } catch (Exception e) {
-            }
-        }
+    private void closeEverything(Socket s2, PrintStream out, BufferedReader in) {
     }
 
     @Override
@@ -47,12 +34,15 @@ public class ClientHandler implements Runnable{
 
         while (s.isConnected()) {
             try {
-                messageFromClient = br.readLine();
-                broadcastMessage(messageFromClient);
+                messageFromClient = in.readLine();
             } catch (Exception e) {
-                closeEverything(s, br, bw);
+                closeEverything(s, out, in);
                 break;
             }
         }
+    }
+
+    public String getUserName() {
+        return this.clientUserName;
     }
 }
