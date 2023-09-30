@@ -46,11 +46,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.turtle</groupId>
-            <artifactId>java-turtle</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.hexworks.zircon</groupId>
             <artifactId>zircon.core-jvm</artifactId>
             <version>2020.2.0-RELEASE</version>
