@@ -5,39 +5,79 @@ import java.net.*;
 
 public class ClientHandler implements Runnable{
     private Socket s;
-    public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
+    public static ArrayList<ClientHandler> clients = new ArrayList<>();
 
-    public PrintStream out;
-    public BufferedReader in;
+    private BufferedReader bufferedReader;
+    private BufferedWriter bufferedWriter;
 
     private String clientUserName;
     
     public ClientHandler(Socket s) {
         try {
             this.s = s;
-            this.out = new PrintStream(s.getOutputStream());
-            this.in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+            this.bufferedReader = new BufferedReader(new InputStreamReader(s.getInputStream()));
             
-            this.clientUserName = this.in.readLine().trim();
-            clientHandlers.add(this);
-        } catch (Exception e) {
-            closeEverything(s, out, in);
+            this.clientUserName = bufferedReader.readLine();
+            
+            clients.add(this);
+        } catch (IOException e) {
+            closeEverything(s, bufferedReader, bufferedWriter);
         }
     }
 
-    private void closeEverything(Socket s2, PrintStream out, BufferedReader in) {
+    private void closeEverything(Socket s2, BufferedReader bufferedReader2, BufferedWriter bufferedWriter2) {
+        removeClient(clientUserName);
+        try {
+            if (bufferedReader2 != null) {
+                bufferedReader2.close();
+            }
+            if (bufferedWriter2 != null) {
+                bufferedWriter2.close();
+            }
+            if (s != null) {
+                s.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-
+    
     @Override
     public void run() {
         String messageFromClient;
 
         while (s.isConnected()) {
             try {
-                messageFromClient = in.readLine();
-            } catch (Exception e) {
-                closeEverything(s, out, in);
+                messageFromClient = bufferedReader.readLine();
+
+                broadcastMessage(messageFromClient, clientUserName);
+
+            } catch (IOException e) {
+                closeEverything(s, bufferedReader, bufferedWriter);
                 break;
+            }
+        }
+    }
+
+    public static void broadcastMessage(String message, String userSending) {
+        for (ClientHandler c : clients) {
+            if (c.getUserName().equals(userSending)) {}
+            try {
+                c.bufferedWriter.write(message);
+                c.bufferedWriter.newLine();
+                c.bufferedWriter.flush();
+            } catch (Exception e) {
+                System.out.println("Could not broadcast message to: "+c.getUserName());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void removeClient(String clientName) {
+        for (int i = 0; i < clients.size(); i++) {
+            if (clients.get(i).getUserName().equals(clientName)) {
+                clients.remove(i);
             }
         }
     }

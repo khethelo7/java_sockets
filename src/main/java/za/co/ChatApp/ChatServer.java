@@ -11,27 +11,20 @@ public class ChatServer {
     }
 
     public void startServer() {
-        new Thread( new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    System.out.println("Awaiting connections...\n");
-                    while (!serverSocket.isClosed()) {
-                        Socket socket = serverSocket.accept();
-                        ClientHandler clientHandler = new ClientHandler(socket);
+        System.out.println("Chat server has started...\nListening on port no.:"+serverSocket.getLocalPort());
+        try {
+            while (!this.serverSocket.isClosed()) {
+                Socket socket = serverSocket.accept();
 
-                        System.out.println(clientHandler.getUserName()+ " has joined the chat");
-                        broadcastMessage(clientHandler.getUserName()+ " has joined the chat");
-                        
-                        Thread thread = new Thread(clientHandler);
-                        thread.start();
-                    }
-                } catch (IOException e) {
-                    System.out.println("Cannot start server!");
-                }
+                System.out.println("A new client has connected");
+
+                Runnable client = new ClientHandler(socket);
+                Thread connection = new Thread(client);
+                connection.start();
             }
-        }).start();
-        
+        } catch (Exception e) {
+            closeServerSocket();
+        }
     }
 
     public void closeServerSocket() {
@@ -44,16 +37,6 @@ public class ChatServer {
         }
     }
 
-    public void broadcastMessage(String message) {
-        for (ClientHandler c : ClientHandler.clientHandlers) {
-            try {
-                    c.out.println(message);
-                    c.out.flush();
-            } catch (Exception e) {
-                System.out.println("Could not send to: "+c.getUserName());
-            }
-        }
-    }
     public static void main(String[] args) throws IOException {
         ServerSocket ss = new ServerSocket(9806);
         ChatServer server = new ChatServer(ss);
